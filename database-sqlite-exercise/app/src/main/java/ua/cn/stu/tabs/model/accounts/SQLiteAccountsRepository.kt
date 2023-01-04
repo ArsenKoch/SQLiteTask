@@ -1,8 +1,11 @@
 package ua.cn.stu.tabs.model.accounts
 
+import android.database.sqlite.SQLiteConstraintException
 import android.database.sqlite.SQLiteDatabase
+import androidx.core.content.contentValuesOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import ua.cn.stu.tabs.model.AccountAlreadyExistsException
 import ua.cn.stu.tabs.model.AuthException
 import ua.cn.stu.tabs.model.EmptyFieldException
 import ua.cn.stu.tabs.model.Field
@@ -54,11 +57,9 @@ class SQLiteAccountsRepository(
     }
 
     override suspend fun getAccount(): Flow<Account?> {
-        return currentAccountIdFlow.get()
-            .map { accountId ->
-                getAccountById(accountId.value)
-            }
-            .flowOn(ioDispatcher)
+        return currentAccountIdFlow.get().map { accountId ->
+            getAccountById(accountId.value)
+        }.flowOn(ioDispatcher)
     }
 
     override suspend fun updateAccountUsername(newUsername: String) =
@@ -83,7 +84,9 @@ class SQLiteAccountsRepository(
             ),
             "${AppSQLiteContract.AccountsTable.COLUMN_EMAIL} = ?",
             arrayOf(email),
-            null, null, null
+            null,
+            null,
+            null
 
         )
         return cursor.use {
@@ -98,28 +101,31 @@ class SQLiteAccountsRepository(
     }
 
     private fun createAccount(signUpData: SignUpData) {
-        TODO(
-            "#4 \n " +
-                    "1) Insert a new row into accounts table here using data provided by SignUpData class \n" +
-                    "2) throw AccountAlreadyExistsException if there is another account with such email in the database \n" +
-
-                    "Tip: use SQLiteDatabase.insertOrThrow method and surround it with try-catch(e: SQLiteConstraintException)"
-        )
+        try {
+            db.insertOrThrow(
+                AppSQLiteContract.AccountsTable.TABLE_NAME, null, contentValuesOf(
+                    AppSQLiteContract.AccountsTable.COLUMN_EMAIL to signUpData.email,
+                    AppSQLiteContract.AccountsTable.COLUMN_USERNAME to signUpData.username,
+                    AppSQLiteContract.AccountsTable.COLUMN_CREATED_AT to System.currentTimeMillis(),
+                    AppSQLiteContract.AccountsTable.COLUMN_EMAIL to signUpData.email,
+                )
+            )
+        } catch (e: SQLiteConstraintException) {
+            val appException = AccountAlreadyExistsException()
+            appException.initCause(e)
+            throw appException
+        }
     }
 
     private fun getAccountById(accountId: Long): Account? {
         TODO(
-            "#5 \n " +
-                    "1) Fetch account data by ID from the database \n" +
-                    "2) Return NULL if accountId = AppSettings.NO_ACCOUNT_ID or there is no row with such ID in the database \n" +
-                    "3) Do not forget to close Cursor"
+            "#5 \n " + "1) Fetch account data by ID from the database \n" + "2) Return NULL if accountId = AppSettings.NO_ACCOUNT_ID or there is no row with such ID in the database \n" + "3) Do not forget to close Cursor"
         )
     }
 
     private fun updateUsernameForAccountId(accountId: Long, newUsername: String) {
         TODO(
-            "#6 \n " +
-                    "Update username column of the row with the specified account ID"
+            "#6 \n " + "Update username column of the row with the specified account ID"
         )
     }
 
