@@ -118,9 +118,30 @@ class SQLiteAccountsRepository(
     }
 
     private fun getAccountById(accountId: Long): Account? {
-        TODO(
-            "#5 \n " + "1) Fetch account data by ID from the database \n" + "2) Return NULL if accountId = AppSettings.NO_ACCOUNT_ID or there is no row with such ID in the database \n" + "3) Do not forget to close Cursor"
+        val cursor = db.query(
+            AppSQLiteContract.AccountsTable.TABLE_NAME,
+            arrayOf(
+                AppSQLiteContract.AccountsTable.COLUMN_ID,
+                AppSQLiteContract.AccountsTable.COLUMN_EMAIL,
+                AppSQLiteContract.AccountsTable.COLUMN_USERNAME,
+                AppSQLiteContract.AccountsTable.COLUMN_CREATED_AT
+            ),
+            "${AppSQLiteContract.AccountsTable.COLUMN_ID} = ?",
+            arrayOf(accountId.toString()),
+            null,
+            null,
+            null
         )
+        return cursor.use {
+            if (cursor.count == 0) return@use null
+            cursor.moveToFirst()
+            Account(
+                id = cursor.getLong(cursor.getColumnIndexOrThrow(AppSQLiteContract.AccountsTable.COLUMN_ID)),
+                username = cursor.getString(cursor.getColumnIndexOrThrow(AppSQLiteContract.AccountsTable.COLUMN_USERNAME)),
+                email = cursor.getString(cursor.getColumnIndexOrThrow(AppSQLiteContract.AccountsTable.COLUMN_EMAIL)),
+                createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(AppSQLiteContract.AccountsTable.COLUMN_CREATED_AT))
+            )
+        }
     }
 
     private fun updateUsernameForAccountId(accountId: Long, newUsername: String) {
