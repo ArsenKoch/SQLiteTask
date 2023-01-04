@@ -145,8 +145,13 @@ class SQLiteAccountsRepository(
     }
 
     private fun updateUsernameForAccountId(accountId: Long, newUsername: String) {
-        TODO(
-            "#6 \n " + "Update username column of the row with the specified account ID"
+        db.update(
+            AppSQLiteContract.AccountsTable.TABLE_NAME,
+            contentValuesOf(
+                AppSQLiteContract.AccountsTable.COLUMN_USERNAME to newUsername
+            ),
+            "${AppSQLiteContract.AccountsTable.COLUMN_ID} = ?",
+            arrayOf(accountId.toString())
         )
     }
 
