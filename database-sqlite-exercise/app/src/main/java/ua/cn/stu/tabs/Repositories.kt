@@ -10,6 +10,7 @@ import ua.cn.stu.tabs.model.boxes.BoxesRepository
 import ua.cn.stu.tabs.model.boxes.SQLiteBoxesRepository
 import ua.cn.stu.tabs.model.settings.AppSettings
 import ua.cn.stu.tabs.model.settings.SharedPreferencesAppSettings
+import ua.cn.stu.tabs.model.sqlite.AppSQLiteHelper
 
 object Repositories {
 
@@ -18,8 +19,7 @@ object Repositories {
     // -- stuffs
 
     private val database: SQLiteDatabase by lazy<SQLiteDatabase> {
-        TODO("#2 \n"
-                + "Create a writable SQLiteDatabase object by using AppSQLiteHelper")
+        AppSQLiteHelper(applicationContext).writableDatabase
     }
 
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
