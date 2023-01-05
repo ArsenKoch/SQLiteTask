@@ -23,8 +23,7 @@ class SQLiteBoxesRepository(
     override suspend fun getBoxes(onlyActive: Boolean): Flow<List<Box>> {
         return combine(accountsRepository.getAccount(), reconstructFlow) { account, _ ->
             queryBoxes(onlyActive, account?.id)
-        }
-            .flowOn(ioDispatcher)
+        }.flowOn(ioDispatcher)
     }
 
     override suspend fun activateBox(box: Box) = wrapSQLiteException(ioDispatcher) {
@@ -70,32 +69,26 @@ class SQLiteBoxesRepository(
 
     private fun saveActiveFlag(accountId: Long, boxId: Long, isActive: Boolean) {
         db.insertWithOnConflict(
-            AppSQLiteContract.AccountsBoxesSettingsTable.TABLE_NAME,
-            null,
-            contentValuesOf(
+            AppSQLiteContract.AccountsBoxesSettingsTable.TABLE_NAME, null, contentValuesOf(
                 AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_BOX_ID to boxId,
                 AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_ACCOUNT_ID to accountId,
                 AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_IS_ACTIVE to isActive,
-            ),
-            SQLiteDatabase.CONFLICT_REPLACE
+            ), SQLiteDatabase.CONFLICT_REPLACE
         )
     }
 
     private fun queryBoxes(onlyActive: Boolean, accountId: Long): Cursor {
-        if (onlyActive) {
-            TODO(
-                "#10 \n" +
-                        "Return a cursor which selects only those rows from boxes table \n" +
-                        "which doesn't have setting in the accounts_boxes_settings table or which \n" +
-                        "have such setting and it's = 1 (true) \n" +
-
-                        "Tip: use rawQuery and LEFT JOIN to combine data from 2 tables"
-            )
+        return if (onlyActive) {
+            val sql =   " SELECT ${AppSQLiteContract.BoxesTable.TABLE_NAME}.* " +
+                        " FROM ${AppSQLiteContract.BoxesTable.TABLE_NAME}" +
+                        " LEFT JOIN ${AppSQLiteContract.AccountsBoxesSettingsTable.TABLE_NAME}" +
+                        " ON ${AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_BOX_ID} = ${AppSQLiteContract.BoxesTable.COLUMN_ID}" +
+                        " AND ${AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_ACCOUNT_ID} = ?" +
+                        " WHERE ${AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_IS_ACTIVE} IS NULL" +
+                        " OR ${AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_IS_ACTIVE} = 1"
+            db.rawQuery(sql, arrayOf(accountId.toString()))
         } else {
-            TODO(
-                "#9 \n" +
-                        "Just return a cursor with selects all rows from boxes table"
-            )
+            db.rawQuery("SELECT * FROM ${AppSQLiteContract.BoxesTable.TABLE_NAME}", null)
         }
     }
 }
