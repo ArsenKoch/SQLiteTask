@@ -2,11 +2,13 @@ package ua.cn.stu.tabs.model.boxes
 
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.graphics.Color
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import ua.cn.stu.tabs.model.AuthException
 import ua.cn.stu.tabs.model.accounts.AccountsRepository
 import ua.cn.stu.tabs.model.boxes.entities.Box
+import ua.cn.stu.tabs.model.sqlite.AppSQLiteContract
 import ua.cn.stu.tabs.model.sqlite.wrapSQLiteException
 
 class SQLiteBoxesRepository(
@@ -52,9 +54,11 @@ class SQLiteBoxesRepository(
     }
 
     private fun parseBox(cursor: Cursor): Box {
-        TODO("#7 \n" +
-                "1) Get id, color name and color value from the cursor here \n" +
-                "2) Create a Box object")
+        return Box(
+            id = cursor.getLong(cursor.getColumnIndexOrThrow(AppSQLiteContract.BoxesTable.COLUMN_ID)),
+            colorName = cursor.getString(cursor.getColumnIndexOrThrow(AppSQLiteContract.BoxesTable.COLUMN_COLOR_NAME)),
+            colorValue = Color.parseColor(cursor.getString(cursor.getColumnIndexOrThrow(AppSQLiteContract.BoxesTable.COLUMN_COLOR_VALUE)))
+        )
     }
 
     private fun saveActiveFlag(accountId: Long, boxId: Long, isActive: Boolean) {
