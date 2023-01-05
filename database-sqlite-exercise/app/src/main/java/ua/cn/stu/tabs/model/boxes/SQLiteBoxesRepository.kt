@@ -3,6 +3,7 @@ package ua.cn.stu.tabs.model.boxes
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.graphics.Color
+import androidx.core.content.contentValuesOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import ua.cn.stu.tabs.model.AuthException
@@ -21,8 +22,8 @@ class SQLiteBoxesRepository(
 
     override suspend fun getBoxes(onlyActive: Boolean): Flow<List<Box>> {
         return combine(accountsRepository.getAccount(), reconstructFlow) { account, _ ->
-                queryBoxes(onlyActive, account?.id)
-            }
+            queryBoxes(onlyActive, account?.id)
+        }
             .flowOn(ioDispatcher)
     }
 
@@ -57,28 +58,44 @@ class SQLiteBoxesRepository(
         return Box(
             id = cursor.getLong(cursor.getColumnIndexOrThrow(AppSQLiteContract.BoxesTable.COLUMN_ID)),
             colorName = cursor.getString(cursor.getColumnIndexOrThrow(AppSQLiteContract.BoxesTable.COLUMN_COLOR_NAME)),
-            colorValue = Color.parseColor(cursor.getString(cursor.getColumnIndexOrThrow(AppSQLiteContract.BoxesTable.COLUMN_COLOR_VALUE)))
+            colorValue = Color.parseColor(
+                cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        AppSQLiteContract.BoxesTable.COLUMN_COLOR_VALUE
+                    )
+                )
+            )
         )
     }
 
     private fun saveActiveFlag(accountId: Long, boxId: Long, isActive: Boolean) {
-        TODO("#8 \n" +
-                "Insert or update isActive flag in the accounts_boxes_settings table here \n" +
-
-                "Tip: use SQLiteDatabase.insertWithOnConflict method")
+        db.insertWithOnConflict(
+            AppSQLiteContract.AccountsBoxesSettingsTable.TABLE_NAME,
+            null,
+            contentValuesOf(
+                AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_BOX_ID to boxId,
+                AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_ACCOUNT_ID to accountId,
+                AppSQLiteContract.AccountsBoxesSettingsTable.COLUMN_IS_ACTIVE to isActive,
+            ),
+            SQLiteDatabase.CONFLICT_REPLACE
+        )
     }
 
     private fun queryBoxes(onlyActive: Boolean, accountId: Long): Cursor {
         if (onlyActive) {
-            TODO("#10 \n" +
-                    "Return a cursor which selects only those rows from boxes table \n" +
-                    "which doesn't have setting in the accounts_boxes_settings table or which \n" +
-                    "have such setting and it's = 1 (true) \n" +
+            TODO(
+                "#10 \n" +
+                        "Return a cursor which selects only those rows from boxes table \n" +
+                        "which doesn't have setting in the accounts_boxes_settings table or which \n" +
+                        "have such setting and it's = 1 (true) \n" +
 
-                    "Tip: use rawQuery and LEFT JOIN to combine data from 2 tables")
+                        "Tip: use rawQuery and LEFT JOIN to combine data from 2 tables"
+            )
         } else {
-            TODO("#9 \n" +
-                    "Just return a cursor with selects all rows from boxes table")
+            TODO(
+                "#9 \n" +
+                        "Just return a cursor with selects all rows from boxes table"
+            )
         }
     }
 }
